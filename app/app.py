@@ -119,46 +119,6 @@ def delete_task(id):
             db.close()
     return redirect("/")
 
-@app.route("/update/<int:id>", methods=["POST"])
-def update_task(id):
-    task = request.form['task']
-    cursor = None
-    db = None
-
-    if "user_id" not in session:
-        flash('You are not logged in')
-        app.logger.error('User not logged in')
-        return redirect("/login")
-
-    if not id:
-        flash('Task ID is required')
-        return redirect("/")
-    if not task:
-        flash('Task is required')
-        return redirect("/")
-    try:
-        db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("UPDATE todo SET task = %s WHERE id = %s AND user_id = %s", (task, id, session['user_id']))
-        db.commit()
-
-        if cursor.rowcount > 0:
-            flash('Task updated successfully')
-        elif cursor.rowcount == 0:
-            flash('Task not found')
-        if cursor:
-            cursor.close()
-        if db:
-            db.close()
-        return redirect("/")
-    except Error as e:
-        print(e)
-        flash('An error occurred while updating the task')
-    except Exception as e:
-        print(e)
-        flash('An error occurred while updating the task')
-    return redirect("/")
-
 @app.route("/login",methods = ["GET","POST"])
 def login():
     if request.method == "POST":
