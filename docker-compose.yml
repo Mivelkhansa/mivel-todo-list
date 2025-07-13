@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  caddy:
+    image: docker.io/caddy:2.6.4
+    container_name: caddy_container
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:z
+      - ./caddy/data:/data:z
+      - ./caddy/config:/config:z
+      - ./caddy/logs:/logs:z
+    depends_on:
+      - app
+    environment:
+      - APP_HOST=app
+      - APP_PORT=5000
+
+  db:
+    image: docker.io/mysql:8.0
+    container_name: mysql_container
+    restart: always
+    expose:
+      - "3306"
+    volumes:
+      - ./db/data:/var/lib/mysql:z
+      - ./db/init:/docker-entrypoint-initdb.d:z
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=main
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=userpassword
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    expose:
+      - "5000"
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=main
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=userpassword
+      - SECRET_KEY=super_secret_key
+    depends_on:
+      - db

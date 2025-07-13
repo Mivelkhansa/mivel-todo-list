@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>My Web App</title>
+        <style>
+            .navbar {
+                font-family: "Open Sans", sans-serif;
+                font-optical-sizing: auto;
+                font-weight: bold;
+                font-style: normal;
+                font-variation-settings: "wdth" 100;
+                font-size: 30.1px;
+
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+
+                background-color: #1e201e;
+                color: whitesmokes;
+            }
+
+            .content {
+                font-family: "Open Sans", sans-serif;
+                font-optical-sizing: auto;
+                font-weight: bold;
+                font-style: normal;
+                font-variation-settings: "wdth" 100;
+
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+
+                background-color: #1e201e;
+                color: whitesmokes;
+            }
+
+            .title {
+                margin-top: 10px;
+                margin-bottom: 10px;
+                margin-left: 25px;
+            }
+
+            .page-link {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+                margin-right: 25px;
+            }
+
+            .page-link div {
+                margin-top: 10px;
+                margin-bottom: 10px;
+                margin-left: 10px;
+            }
+
+            .form {
+                font-family: "Open Sans", sans-serif;
+                font-optical-sizing: auto;
+                font-weight: bold;
+                font-style: normal;
+                font-variation-settings: "wdth" 100;
+                font-size: 30.1px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="navbar">
+            <div class="title">
+                <b>TODO-LIST</b>
+            </div>
+            <div class="page-link">
+                <div><b>HOME</b></div>
+                <div><b>SIGN-UP</b></div>
+            </div>
+        </div>
+        <div class="content">
+            <div class="form">
+                <form action="/" method="post">
+                    <input type="text" name="add_task" />
+                    <button type="submit">ADD TASK</button>
+                </form>
+            </div>
+            {% if todo_item %} {% for todo in todo_item %}
+            <div class="todo-item">{{ todo }}</div>
+            {% endfor %} {% endif %}
+        </div>
+    </body>
+</html>
