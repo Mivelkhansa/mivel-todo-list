@@ -4,7 +4,6 @@ import bcrypt
 from mysql.connector import Error
 import mysql.connector
 import os
-from mypy.fastparse import N
 
 '''
  maintainer: mivel
@@ -93,16 +92,31 @@ def home():
 
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete_task(id):
+    if "user_id" not in session:
+        flash('You are not logged in')
+        app.logger.error('User not logged in')
+        return redirect("/login")
+
     if not id:
         flash('Task ID is required')
         return redirect("/")
-    db = get_db_connection()
-    cursor = db.cursor()
-    cursor.execute("DELETE FROM todo WHERE id = %s AND user_id = %s", (id, session['user_id']))
-    db.commit()
-    cursor.close()
-    db.close()
-    flash('Task deleted successfully')
+    db = None
+    cursor = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM todo WHERE id = %s AND user_id = %s", (id, session['user_id']))
+        db.commit()
+        cursor.close()
+        db.close()
+        flash('Task deleted successfully')
+    except Error as e:
+        app.logger.error('Error deleting task:', e)
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
     return redirect("/")
 
 @app.route("/update/<int:id>", methods=["POST"])
@@ -110,6 +124,11 @@ def update_task(id):
     task = request.form['task']
     cursor = None
     db = None
+
+    if "user_id" not in session:
+        flash('You are not logged in')
+        app.logger.error('User not logged in')
+        return redirect("/login")
 
     if not id:
         flash('Task ID is required')
