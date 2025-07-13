@@ -4,6 +4,7 @@ import bcrypt
 from mysql.connector import Error
 import mysql.connector
 import os
+from mypy.fastparse import N
 
 '''
  maintainer: mivel
@@ -42,6 +43,7 @@ def get_user(email):
         if db:
             db.close()
 
+#todo refactor to shorten code
 @app.route("/", methods = ["GET","POST"])
 def home():
     if "user_id" not in session:
@@ -66,6 +68,7 @@ def home():
                 if db:
                     db.close()
         return redirect("/")
+    # for get request
     else:
         todo_item = []
         cursor = None
@@ -73,15 +76,11 @@ def home():
         try:
             db = get_db_connection()
             cursor = db.cursor()
-            # todo check if user exists | not hardcoded
-            cursor.execute("SELECT id FROM users WHERE email = ")
-            user = cursor.fetchone()
-            if user:
-                cursor.execute("SELECT task FROM todo where user_id = %s;", (session['user_id'],))
-                rows = cursor.fetchall()
-                if rows:
-                    todo_item = [row[0] for row in rows]
-                print("Fetched tasks:", todo_item)
+            cursor.execute("SELECT task FROM todo WHERE user_id = %s;", (session['user_id'],))
+            rows = cursor.fetchall()
+            if rows:
+                todo_item = [row[0] for row in rows]
+            app.logger.info("Fetched tasks:", todo_item)
         except Error as e:
             print(e)
         finally:
@@ -89,8 +88,57 @@ def home():
                 cursor.close()
             if db:
                 db.close()
-            print("Fetched tasks:", todo_item)
+            app.logger.info("Fetched tasks:", todo_item)
         return render_template("index.html", todo_item = todo_item)
+
+@app.route("/delete/<int:id>", methods=["POST"])
+def delete_task(id):
+    if not id:
+        flash('Task ID is required')
+        return redirect("/")
+    db = get_db_connection()
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM todo WHERE id = %s AND user_id = %s", (id, session['user_id']))
+    db.commit()
+    cursor.close()
+    db.close()
+    flash('Task deleted successfully')
+    return redirect("/")
+
+@app.route("/update/<int:id>", methods=["POST"])
+def update_task(id):
+    task = request.form['task']
+    cursor = None
+    db = None
+
+    if not id:
+        flash('Task ID is required')
+        return redirect("/")
+    if not task:
+        flash('Task is required')
+        return redirect("/")
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute("UPDATE todo SET task = %s WHERE id = %s AND user_id = %s", (task, id, session['user_id']))
+        db.commit()
+
+        if cursor.rowcount > 0:
+            flash('Task updated successfully')
+        elif cursor.rowcount == 0:
+            flash('Task not found')
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+        return redirect("/")
+    except Error as e:
+        print(e)
+        flash('An error occurred while updating the task')
+    except Exception as e:
+        print(e)
+        flash('An error occurred while updating the task')
+    return redirect("/")
 
 @app.route("/login",methods = ["GET","POST"])
 def login():
@@ -126,6 +174,7 @@ def login():
             if db:
                 db.close()
             flash('Invalid email or password')
+            app.logger.error(f'Email: {email}, Password: {password}')
             return redirect("/login")
     return render_template("login.html")
 
@@ -153,6 +202,7 @@ def signup():
             cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
             if cursor.fetchone():
                 flash("Email already registered", "error")
+                app.logger.error(f'User creation failed: {email}')
                 return redirect("/signup")
 
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -160,6 +210,7 @@ def signup():
             db.commit()
         except Exception:
             flash('Error connecting to database',"error")
+            app.logger.error('failed connection to database')
             return redirect("/signup")
 
         if cursor:
@@ -167,6 +218,7 @@ def signup():
         if db:
             db.close()
         flash('Account created successfully',"success")
+        app.logger.info(f'User created: {email}')
         return redirect("/login")
     return render_template("signup.html")
 

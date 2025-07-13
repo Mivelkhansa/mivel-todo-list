@@ -32,9 +32,9 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     environment:
       - MYSQL_ROOT_PASSWORD=rootpassword
-      - MYSQL_DATABASE=main
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=userpassword
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
 
   app:
     build:
@@ -45,11 +45,11 @@ services:
     expose:
       - "5000"
     environment:
-      - MYSQL_HOST=db
-      - MYSQL_PORT=3306
-      - MYSQL_DATABASE=main
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=userpassword
-      - SECRET_KEY=super_secret_key
+      - MYSQL_HOST=${DB_HOST}
+      - MYSQL_PORT=${DB_PORT}
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - SECRET_KEY=${FLASK_SECRET_KEY}
     depends_on:
       - db
