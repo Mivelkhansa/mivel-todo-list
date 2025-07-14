@@ -64,10 +64,10 @@ def home():
         try:
             db = get_db_connection()
             cursor = db.cursor()
-            cursor.execute("SELECT task FROM todo WHERE user_id = %s;", (session['user_id'],))
+            cursor.execute("SELECT id,task FROM todo WHERE user_id = %s;", (session['user_id'],))
             rows = cursor.fetchall()
             if rows:
-                todo_item = [row[0] for row in rows]
+                todo_item = [row for row in rows]
             app.logger.info("Fetched tasks:", todo_item)
         except Error as e:
             print(e)
