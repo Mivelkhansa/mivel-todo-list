@@ -13,4 +13,4 @@ COPY . .
 #CMD ["python","app.py"]
 
 # use this for prod
-CMD ["gunicon","wsgi:app","--workers","4","--bind","0.0.0.0:5000"]
+CMD ["gunicon","wsgi:app","--workers","9","--bind","0.0.0.0:5000"]
