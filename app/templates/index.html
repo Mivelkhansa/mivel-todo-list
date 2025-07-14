@@ -31,6 +31,22 @@
                 font-size: 30px;
             }
 
+            .navbar a {
+                text-decoration: none;
+                font-family: "Open Sans", sans-serif;
+                font-optical-sizing: auto;
+                font-weight: bold;
+                font-style: normal;
+                font-variation-settings: "wdth" 100;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background-color: #1e201e;
+                color: whitesmoke;
+                font-weight: bold;
+                font-size: 30px;
+            }
+
             .page-link {
                 display: flex;
                 gap: 20px;
@@ -159,13 +175,21 @@
     </head>
     <body>
         <div class="navbar">
-            <div><b>TODO-LIST</b></div>
+            <div>
+                <a href="/"><b>TODO-LIST</b></a>
+            </div>
             <div class="page-link">
-                <div><b>HOME</b></div>
-                <div><b>SIGN-UP</b></div>
+                <div>
+                    <a href="/"><b>HOME</b></a>
+                </div>
+                <div>
+                    <a href="/signup"><b>SIGN-UP</b></a>
+                </div>
+                <div>
+                    <a href="/logout"><b>LOG-OUT</b></a>
+                </div>
             </div>
         </div>
-
         <div class="content">
             <form action="/" method="POST" class="form">
                 <input
