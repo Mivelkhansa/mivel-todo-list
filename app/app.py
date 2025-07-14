@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, flash
 from datetime import timedelta
+import re
 import bcrypt
 from mysql.connector import Error
 import mysql.connector
@@ -26,23 +27,9 @@ def get_db_connection():
         autocommit=False
     )
 
-def get_user(email):
-    cursor = None
-    db = None
-    try:
-        db = get_db_connection()
-        cursor = db.cursor()
-        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
-        if user:
-            return user[0]
-    except Error as e:
-        print(f"Error: {e}")
-    finally:
-        if cursor:
-            cursor.close()
-        if db:
-            db.close()
+def email_validation(email):
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    return re.match(pattern, email)
 
 #todo refactor to shorten code
 @app.route("/", methods = ["GET","POST"])
@@ -129,8 +116,12 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        if not email or not password:
-            flash('Email and password are required')
+        if not email_validation(email):
+            flash('Invalid email',"error")
+            return redirect("/login")
+
+        if not password:
+            flash('Password is required',"error")
             return redirect("/login")
 
         try:
@@ -174,7 +165,11 @@ def signup():
         password = request.form['password']
         confirm_password = request.form['confirm_password']
 
-        if not email or not password or not confirm_password:
+        if not email_validation(email):
+            flash('Invalid email',"error")
+            return redirect("/signup")
+
+        if not password or not confirm_password:
             flash('Email, password, and confirm password are required',"error")
             return redirect("/signup")
 
