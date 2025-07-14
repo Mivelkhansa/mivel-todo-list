@@ -38,7 +38,7 @@ def home():
         return redirect("/login")
 
     if request.method == "POST":
-        new_task = request.form.get("add_task")
+        new_task = request.form["add_task"]
         if new_task:
             cursor = None
             db = None
@@ -77,7 +77,7 @@ def home():
             if db:
                 db.close()
             app.logger.info("Fetched tasks:", todo_item)
-        return render_template("index.html", todo_item = todo_item)
+        return render_template("index.html", todo_items = todo_item)
 
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete_task(id):
