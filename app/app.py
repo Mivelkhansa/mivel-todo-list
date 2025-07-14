@@ -14,14 +14,16 @@ import os
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 app.permanent_session_lifetime = timedelta(days=30)
+port = os.getenv("MYSQL_PORT")
 
 def get_db_connection():
     return mysql.connector.connect(
         host=os.getenv("MYSQL_HOST"),
-        port=os.getenv("MYSQL_PORT"),
+        port=port,
         user=os.getenv("MYSQL_USER"),
         password=os.getenv("MYSQL_PASSWORD"),
-        database=os.getenv("MYSQL_DATABASE")
+        database=os.getenv("MYSQL_DATABASE"),
+        autocommit=False
     )
 
 def get_user(email):
@@ -121,39 +123,45 @@ def delete_task(id):
 
 @app.route("/login",methods = ["GET","POST"])
 def login():
+    db = None
+    cursor = None
     if request.method == "POST":
-        db = get_db_connection()
-        cursor = db.cursor()
         email = request.form['email']
         password = request.form['password']
-
-        '''
-            if password != confirm:
-            flash('Passwords do not match')
-            return redirect("/login")
-        '''
 
         if not email or not password:
             flash('Email and password are required')
             return redirect("/login")
 
-        cursor.execute("SELECT id, password FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
-        if user:
-            if bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8')):
-                session['user_id'] = user[0]
+        try:
+            db = get_db_connection()
+            cursor = db.cursor()
+
+            cursor.execute("SELECT id, password FROM users WHERE email = %s", (email,))
+            user = cursor.fetchone()
+            if user:
+                if bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8')):
+                    session['user_id'] = user[0]
+                    if cursor:
+                        cursor.close()
+                    if db:
+                        db.close()
+                    return redirect("/")
+            else:
                 if cursor:
                     cursor.close()
                 if db:
                     db.close()
-                return redirect("/")
-        else:
+                flash('Invalid email or password')
+                app.logger.error(f'Email: {email}, Password: {password}')
+                return redirect("/login")
+        except Exception as e:
             if cursor:
                 cursor.close()
             if db:
                 db.close()
-            flash('Invalid email or password')
-            app.logger.error(f'Email: {email}, Password: {password}')
+            app.logger.error(f'Error: {e}')
+            flash('An error occurred')
             return redirect("/login")
     return render_template("login.html")
 
@@ -164,13 +172,13 @@ def signup():
     if request.method == "POST":
         email = request.form['email'].strip().lower()
         password = request.form['password']
-        confirm = request.form['confirm']
+        confirm_password = request.form['confirm_password']
 
-        if not email or not password or not confirm:
+        if not email or not password or not confirm_password:
             flash('Email, password, and confirm password are required',"error")
             return redirect("/signup")
 
-        if password != confirm:
+        if password != confirm_password:
             flash('Passwords do not match',"error")
             return redirect("/signup")
 
@@ -187,9 +195,9 @@ def signup():
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             cursor.execute("INSERT INTO users (email, password) VALUES (%s, %s)", (email, hashed_password))
             db.commit()
-        except Exception:
+        except Exception as e:
             flash('Error connecting to database',"error")
-            app.logger.error('failed connection to database')
+            app.logger.error(f'failed connection to database: {e}')
             return redirect("/signup")
 
         if cursor:
